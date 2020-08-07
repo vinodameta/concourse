@@ -1,0 +1,12 @@
+platform: linux
+
+image: docker:///vinod18/ner
+
+inputs:
+- name: code
+
+outputs:
+- name: binaries
+
+run:
+  path: code/concourse/build.sh

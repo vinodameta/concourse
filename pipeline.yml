@@ -1,0 +1,24 @@
+jobs:
+- name: build
+  public: true
+  serial: true
+  plan:
+  - get: code
+    trigger: true
+  - task: build
+    file: code/concourse/build.yml
+
+resources:
+- name: code
+  type: git
+  source:
+    uri: https://github.com/vinodameta/concourse.git
+
+- name: image
+  type: docker-image
+  source:
+    email: {{docker-hub-email}}
+    username: bristechsrm
+    password: {{docker-hub-password}}
+    repository: vinod18/ner
+
