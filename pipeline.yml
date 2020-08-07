@@ -1,24 +1,24 @@
-jobs:
-- name: build
-  public: true
-  serial: true
-  plan:
-  - get: code
-    trigger: true
-  - task: build
-    file: code/concourse/build.yml
-
 resources:
-- name: code
+- name: tutorial
   type: git
   source:
     uri: https://github.com/vinodameta/concourse.git
+    branch: master
 
-- name: image
+- name: hello-world-docker-image
   type: docker-image
   source:
-    email: {{docker-hub-email}}
-    username: bristechsrm
-    password: {{docker-hub-password}}
-    repository: vinod18/ner
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/concourse-tutorial-hello-world
 
+jobs:
+- name: publish
+  public: true
+  serial: true
+  plan:
+  - get: tutorial
+  - put: hello-world-docker-image
+    params:
+      build: tutorial/
