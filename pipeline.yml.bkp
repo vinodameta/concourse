@@ -1,0 +1,24 @@
+resources:
+- name: tutorial
+  type: git
+  source:
+    uri: https://github.com/vinodameta/concourse.git
+    branch: master
+
+- name: hello-world-docker-image
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/concourse-tutorial-hello-world
+
+jobs:
+- name: publish
+  public: true
+  serial: true
+  plan:
+  - get: tutorial
+  - put: hello-world-docker-image
+    params:
+      build: tutorial/

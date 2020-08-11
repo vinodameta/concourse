@@ -1,24 +1,31 @@
+resource_types:
+- name: kubernetes
+  type: docker-image
+  source:
+    repository: zlabjp/kubernetes-resource
+    tag: "1.17"
+
 resources:
 - name: tutorial
   type: git
   source:
-    uri: https://github.com/vinodameta/concourse.git
+    uri: https://github.com/vinodameta/microservices-demo.git
     branch: master
-
-- name: hello-world-docker-image
-  type: docker-image
+ 
+    #KUBERNETS RESOURSES
+- name: kubernetes-test
+  type: kubernetes
   source:
-    email: ((docker-hub-email))
-    username: ((docker-hub-username))
-    password: ((docker-hub-password))
-    repository: ((docker-hub-username))/concourse-tutorial-hello-world
+    server: https://192.168.99.100:8443
+    namespace: default
+    insecure_skip_tls_verify: true
+    token: {{k8s-token}}
 
 jobs:
-- name: publish
-  public: true
-  serial: true
+- name: kubernetes-deploy-production
   plan:
   - get: tutorial
-  - put: hello-world-docker-image
+    trigger: true
+  - put: kubernetes-test
     params:
-      build: tutorial/
+      kubectl: apply -f tutorial/release/adservice.yaml

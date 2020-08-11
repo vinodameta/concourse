@@ -1,0 +1,26 @@
+resources:
+- name: tutorial
+  type: git
+  source:
+    uri: https://github.com/vinodameta/microservices-demo.git
+    branch: master
+
+- name: adservice
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/adservice
+
+jobs:
+- name: publish
+  public: true
+  serial: true
+  plan:
+  - get: tutorial
+    trigger: true
+  - put: adservice
+    params:
+      build: tutorial/src/adservice
+      tag_file: tutorial/.git/ref
