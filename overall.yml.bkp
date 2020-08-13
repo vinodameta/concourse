@@ -5,13 +5,23 @@ resource_types:
     repository: zlabjp/kubernetes-resource
     tag: "1.17"
 
+
 resources:
 - name: tutorial
   type: git
   source:
     uri: https://github.com/vinodameta/microservices-demo.git
     branch: master
- 
+
+    
+- name: adservice
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/adservice
+
     #KUBERNETS RESOURSES
 - name: kubernetes-test
   type: kubernetes
@@ -20,11 +30,26 @@ resources:
     namespace: default
     insecure_skip_tls_verify: true
     token: {{k8s-token}}
+    
 
 jobs:
+- name: publish-docker-image
+  public: true
+  serial: true
+  plan:
+  - get: tutorial
+    trigger: true
+  - put: adservice
+    params:
+      build: tutorial/src/adservice
+      tag_file: tutorial/.git/ref
+
 - name: kubernetes-deploy-production
   plan:
   - get: tutorial
+    trigger: true
+    passed: [publish-docker-image]
   - put: kubernetes-test
     params:
       kubectl: apply -f tutorial/release/adservice.yaml
+

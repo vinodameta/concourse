@@ -5,6 +5,7 @@ resources:
     uri: https://github.com/vinodameta/microservices-demo.git
     branch: master
 
+    
 - name: adservice
   type: docker-image
   source:
@@ -12,26 +13,10 @@ resources:
     username: ((docker-hub-username))
     password: ((docker-hub-password))
     repository: ((docker-hub-username))/adservice
-
-- name: cartservice
-  type: docker-image
-  source:
-    email: ((docker-hub-email))
-    username: ((docker-hub-username))
-    password: ((docker-hub-password))
-    repository: ((docker-hub-username))/cartservice
-
-- name: checkoutservice
-  type: docker-image
-  source:
-    email: ((docker-hub-email))
-    username: ((docker-hub-username))
-    password: ((docker-hub-password))
-    repository: ((docker-hub-username))/checkoutservice
-
+    
 
 jobs:
-- name: publish
+- name: publish-docker-image
   public: true
   serial: true
   plan:
@@ -41,3 +26,4 @@ jobs:
     params:
       build: tutorial/src/adservice
       tag_file: tutorial/.git/ref
+

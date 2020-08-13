@@ -1,0 +1,155 @@
+resources:
+- name: tutorial
+  type: git
+  source:
+    uri: https://github.com/vinodameta/microservices-demo.git
+    branch: master
+
+- name: adservice
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/adservice
+
+- name: cartservice
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/cartservice
+
+- name: checkoutservice
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/checkoutservice
+
+- name: currencyservice
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/currencyservice
+
+- name: emailservice
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/emailservice
+
+- name: frontend
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/frontend
+
+- name: loadgenerator
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/loadgenerator
+
+- name: paymentservice
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/paymentservice
+
+- name: pcservice
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/pcservice
+ 
+- name: rdservice
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/rdservice
+
+- name: shippingservice
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/shippingservice
+    
+    
+    
+
+    
+
+
+jobs:
+- name: publish-docker-image
+  public: true
+  serial: true
+  plan:
+  - get: tutorial
+    trigger: true
+  - put: adservice
+    params:
+      build: tutorial/src/adservice
+      tag_file: tutorial/.git/ref
+  - put: cartservice    
+    params:  
+      build: tutorial/src/cartservice
+      tag_file: tutorial/.git/ref
+  - put: checkoutservice   
+    params:  
+      build: tutorial/src/checkoutservice
+      tag_file: tutorial/.git/ref
+  - put: currencyservice
+    params:
+      build: tutorial/src/currencyservice
+      tag_file: tutorial/.git/ref
+  - put: emailservice
+    params:
+      build: tutorial/src/emailservice
+      tag_file: tutorial/.git/ref
+  - put: frontend
+    params:
+      build: tutorial/src/frontend
+      tag_file: tutorial/.git/ref
+  - put: loadgenerator
+    params:
+      build: tutorial/src/loadgenerator
+      tag_file: tutorial/.git/ref
+  - put: paymentservice
+    params:
+      build: tutorial/src/paymentservice
+      tag_file: tutorial/.git/ref
+  - put: pcservice
+    params:
+      build: tutorial/src/productcatalogservice
+      tag_file: tutorial/.git/ref
+  - put: rdservice
+    params:
+      build: tutorial/src/recommendationservice
+      tag_file: tutorial/.git/ref
+  - put: shippingservice
+    params:
+      build: tutorial/src/shippingservice
+      tag_file: tutorial/.git/ref
+      
+
+

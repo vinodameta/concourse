@@ -1,0 +1,85 @@
+resource_types:
+- name: kubernetes
+  type: docker-image
+  source:
+    repository: zlabjp/kubernetes-resource
+    tag: "1.17"
+
+resources:
+- name: tutorial
+  type: git
+  source:
+    uri: https://github.com/vinodameta/microservices-demo.git
+    branch: master
+
+    
+- name: adservice
+  type: docker-image
+  source:
+    email: ((docker-hub-email))
+    username: ((docker-hub-username))
+    password: ((docker-hub-password))
+    repository: ((docker-hub-username))/adservice
+
+    #KUBERNETS RESOURSES
+- name: kubernetes-test
+  type: kubernetes
+  source:
+    server: https://192.168.99.100:8443
+    namespace: default
+    insecure_skip_tls_verify: true
+    token: {{k8s-token}}
+    
+
+jobs:
+- name: publish-docker-image
+  public: true
+  serial: true
+  plan:
+  - get: tutorial
+    trigger: true
+  - task: update-image-tag
+    config:
+      platform: linux
+      image_resource:
+        type: docker-image
+        source:
+          repository: rbekker87/build-tools
+
+      outputs:
+      - name: workspace
+      inputs:
+      - name: tutorial
+      run:
+        path: /bin/sh
+        args:
+        - -c
+        - |
+          output_dir=workspace
+          echo $pwd
+          cat tutorial/.git/ref > ./tutorial/tag-version
+          cp -R ./tutorial "${output_dir}/tutorial"
+          ls -al $output_dir
+          printenv
+          cat workspace/tutorial/tag-version
+          ls -al workspace/tutorial
+          variable=`cat workspace/tutorial/.git/ref`
+          export tag=$variable
+          printenv
+          sed -e "s|tag-version|$tag|g" workspace/tutorial/release/adservice.yaml > workspace/tutorial/release/adservice1.yaml
+          cat workspace/tutorial/release/adservice1.yaml
+
+  - put: adservice
+    params:
+      build: workspace/tutorial/src/adservice
+      tag_file: tutorial/.git/ref
+
+      #- name: kubernetes-deploy-production
+      #  plan:
+      #  - get: tutorial
+      #    trigger: true
+      #    passed: [publish-docker-image]
+  - put: kubernetes-test
+    params:
+      kubectl: apply -f workspace/tutorial/release/adservice1.yaml
+      

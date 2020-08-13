@@ -1,0 +1,18 @@
+jobs:
+  - name: job-hello-world
+    public: true
+    plan:
+      - task: hello-world
+        config:
+          platform: linux
+          image_resource:
+            type: docker-image
+            source: {repository: busybox}
+          run:
+            path: sh 
+            args: 
+            - -c
+            - printenv
+            path: ls
+            args:
+            - -al 
