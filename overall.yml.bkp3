@@ -75,7 +75,11 @@ jobs:
       build: workspace/tutorial/src/adservice
       tag_file: tutorial/.git/ref
 
-      #    put resource to k8s cluster locally
+      #- name: kubernetes-deploy-production
+      #  plan:
+      #  - get: tutorial
+      #    trigger: true
+      #    passed: [publish-docker-image]
   - put: kubernetes-test
     params:
       kubectl: apply -f workspace/tutorial/release/adservice1.yaml
