@@ -42,6 +42,7 @@ jobs:
 - name: custom-resource-example
   plan:
   - get: tutorial
+    trigger: true
   - task: update-image-tag
     config:
       platform: linux    
