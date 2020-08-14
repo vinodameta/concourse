@@ -1,0 +1,43 @@
+resources:
+- name: tutorial 
+  type: git
+  source:
+    uri: https://github.com/vinodameta/microservices-demo.git
+    branch: master
+
+- name: s3-bucket
+  type: s3
+  source:
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+    bucket: {{aws-bucket}}
+    versioned_file: tag-version.txt
+    region_name: ap-south-1
+
+jobs:
+- name: custom-resource-example
+  plan:
+  - get: tutorial
+  - task: update-image-tag
+    config:
+      platform: linux    
+      image_resource:
+        type: docker-image
+        source:
+          repository: rbekker87/build-tools
+
+      outputs:
+      - name: tutorial
+      inputs:
+      - name: tutorial
+      run:
+        path: /bin/sh
+        args:
+        - -c
+        - |
+          output_dir=tutorial
+          cat tutorial/.git/ref |  rev | cut -c 8- | rev > ./tutorial/tag-version
+          cat tutorial/tag-version
+  - put: s3-bucket      
+    params:
+       file: tutorial/tag-version

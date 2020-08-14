@@ -3,17 +3,23 @@ resource_types:
   type: docker-image
   source:
     repository: zlabjp/kubernetes-resource
-    tag: "1.17"
 
 resources:
-- name: tutorial
+- name: tutorial 
   type: git
   source:
     uri: https://github.com/vinodameta/microservices-demo.git
     branch: master
-    paths: 
-      - src/adservice
-    
+
+- name: s3-bucket
+  type: s3
+  source:
+    access_key_id: {{aws-access-key}}
+    secret_access_key: {{aws-secret-key}}
+    bucket: {{aws-bucket}}
+    versioned_file: tag-version.txt
+    region_name: ap-south-1
+
 - name: adservice
   type: docker-image
   source:
@@ -31,14 +37,46 @@ resources:
     insecure_skip_tls_verify: true
     token: {{k8s-token}}
     
-
+    
 jobs:
-- name: publish-docker-image
-  public: true
-  serial: true
+- name: custom-resource-example
   plan:
   - get: tutorial
-    trigger: true
+  - task: update-image-tag
+    config:
+      platform: linux    
+      image_resource:
+        type: docker-image
+        source:
+          repository: rbekker87/build-tools
+
+      outputs:
+      - name: tutorial
+      inputs:
+      - name: tutorial
+      run:
+        path: /bin/sh
+        args:
+        - -c
+        - |
+          output_dir=tutorial
+          cat tutorial/.git/ref > ./tutorial/tag-version
+          cat tutorial/tag-version
+  - put: s3-bucket      
+    params:
+       file: tutorial/tag-version
+
+
+  - put: adservice
+    params:
+      build: tutorial/src/adservice
+      tag_file: tutorial/.git/ref
+
+- name: custom-resource-k8s
+  plan:
+  - get: tutorial
+  - get: s3-bucket  
+    passed: [custom-resource-example]
   - task: update-image-tag
     config:
       platform: linux
@@ -48,35 +86,21 @@ jobs:
           repository: rbekker87/build-tools
 
       outputs:
-      - name: workspace
-      inputs:
       - name: tutorial
+      inputs: 
+      - name: tutorial 
+      - name: s3-bucket
       run:
         path: /bin/sh
         args:
         - -c
         - |
-          output_dir=workspace
-          echo $pwd
-          cat tutorial/.git/ref > ./tutorial/tag-version
-          cp -R ./tutorial "${output_dir}/tutorial"
-          ls -al $output_dir
-          printenv
-          cat workspace/tutorial/tag-version
-          ls -al workspace/tutorial
-          variable=`cat workspace/tutorial/.git/ref`
-          export tag=$variable
-          printenv
-          sed -e "s|tag-version|$tag|g" workspace/tutorial/release/adservice.yaml > workspace/tutorial/release/adservice1.yaml
-          cat workspace/tutorial/release/adservice1.yaml
-
-  - put: adservice
-    params:
-      build: workspace/tutorial/src/adservice
-      tag_file: tutorial/.git/ref
-
-      #    put resource to k8s cluster locally
+          output_dir=tutorial
+          ls -al 
+          cat s3-bucket/tag-version.txt
+          sed -i  -e "s|tag-version|`cat s3-bucket/tag-version.txt`|g" tutorial/release/adservice.yaml
+      
   - put: kubernetes-test
     params:
-      kubectl: apply -f workspace/tutorial/release/adservice1.yaml
-      wait_until_ready: 120 
+      kubectl: apply -f tutorial/release/adservice.yaml
+      wait_until_ready: 120        
