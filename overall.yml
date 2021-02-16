@@ -1,107 +1,15 @@
-resource_types:
-- name: kubernetes
-  type: docker-image
-  source:
-    repository: zlabjp/kubernetes-resource
-
-resources:
-- name: tutorial 
-  type: git
-  source:
-    uri: https://github.com/vinodameta/microservices-demo.git
-    branch: master
-
-- name: s3-bucket
-  type: s3
-  source:
-    access_key_id: {{aws-access-key}}
-    secret_access_key: {{aws-secret-key}}
-    bucket: {{aws-bucket}}
-    versioned_file: tag-version.txt
-    region_name: ap-south-1
-
-- name: adservice
-  type: docker-image
-  source:
-    email: ((docker-hub-email))
-    username: ((docker-hub-username))
-    password: ((docker-hub-password))
-    repository: ((docker-hub-username))/adservice
-
-    #KUBERNETS RESOURSES
-- name: kubernetes-test
-  type: kubernetes
-  source:
-    server: https://192.168.99.100:8443
-    namespace: default
-    insecure_skip_tls_verify: true
-    token: {{k8s-token}}
-    
-    
-jobs:
-- name: custom-resource-example
-  plan:
-  - get: tutorial
-    trigger: true
-  - task: update-image-tag
-    config:
-      platform: linux    
-      image_resource:
-        type: docker-image
-        source:
-          repository: rbekker87/build-tools
-
-      outputs:
-      - name: tutorial
-      inputs:
-      - name: tutorial
-      run:
-        path: /bin/sh
-        args:
-        - -c
-        - |
-          output_dir=tutorial
-          cat tutorial/.git/ref > ./tutorial/tag-version
-          cat tutorial/tag-version
-  - put: s3-bucket      
-    params:
-       file: tutorial/tag-version
-
-
-  - put: adservice
-    params:
-      build: tutorial/src/adservice
-      tag_file: tutorial/.git/ref
-
-- name: custom-resource-k8s
-  plan:
-  - get: tutorial
-  - get: s3-bucket  
-    passed: [custom-resource-example]
-  - task: update-image-tag
-    config:
-      platform: linux
-      image_resource:
-        type: docker-image
-        source:
-          repository: rbekker87/build-tools
-
-      outputs:
-      - name: tutorial
-      inputs: 
-      - name: tutorial 
-      - name: s3-bucket
-      run:
-        path: /bin/sh
-        args:
-        - -c
-        - |
-          output_dir=tutorial
-          ls -al 
-          cat s3-bucket/tag-version.txt
-          sed -i  -e "s|tag-version|`cat s3-bucket/tag-version.txt`|g" tutorial/release/adservice.yaml
-      
-  - put: kubernetes-test
-    params:
-      kubectl: apply -f tutorial/release/adservice.yaml
-      wait_until_ready: 120        
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: job1-16-02-08-13
+spec:
+  template:
+    spec:
+      containers:
+        - name: job
+          image: busybox
+          args:
+            - /bin/sh
+            - -c
+            - date; echo sleeping....; sleep 90s; echo exiting...; date
+      restartPolicy: Never
